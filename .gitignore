@@ -1,0 +1,6 @@
+*~
+latex
+*.aux
+*.pdf
+*.agdai
+*.log
