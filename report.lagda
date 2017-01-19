@@ -198,7 +198,7 @@ Ctx = Vec TypeDecl
 
 data Context : Set where
   ⋆ : ∀ {n} → Ctx n → Context
-  ⅋ : Context → Context → Context
+  & : Context → Context → Context
 
 infix 4 _∈_
 
@@ -211,18 +211,18 @@ data _∈_ : TypeDecl → Context → Set where
           → x ∈ ⋆ (y Vec.∷ xs)
 
   here-left-⅋ : ∀ {n m} {x} {xs : Ctx n} {ys : Ctx m}
-              → x ∈ ⅋  (⋆ (x Vec.∷ xs)) (⋆ ys)
+              → x ∈ &  (⋆ (x Vec.∷ xs)) (⋆ ys)
 
   here-right-⅋ : ∀ {n m} {x} {xs : Ctx n} {ys : Ctx m}
-               → x ∈ ⅋ (⋆ xs) (⋆ (x Vec.∷ ys))
+               → x ∈ & (⋆ xs) (⋆ (x Vec.∷ ys))
 
   there-left-⅋ : ∀ {n m} {x} {xs : Ctx n} {ys : Ctx m}
-                 (x∈xs : x ∈ ⅋ (⋆ xs) (⋆ ys))
-               → x ∈ ⅋ (⋆ (x Vec.∷ xs)) (⋆ ys)
+                 (x∈xs : x ∈ & (⋆ xs) (⋆ ys))
+               → x ∈ & (⋆ (x Vec.∷ xs)) (⋆ ys)
   
   there-right-⅋ : ∀ {n m} {x} {xs : Ctx n} {ys : Ctx m}
-                  (x∈xs : x ∈ ⅋ (⋆ xs) (⋆ ys))
-                → x ∈ ⅋ (⋆ xs) (⋆ (x Vec.∷ ys))
+                  (x∈xs : x ∈ & (⋆ xs) (⋆ ys))
+                → x ∈ & (⋆ xs) (⋆ (x Vec.∷ ys))
 \end{code}
 
 \begin{code}
@@ -252,7 +252,7 @@ data _⊢B_▹_ : Context → Behaviour → Context → Set where
         → Γ₁ ⊢B b1 ▹ Γ₁'
         → Γ₂ ⊢B b2 ▹ Γ₂'
         ------------------------------------
-        → (⅋ Γ₁ Γ₂) ⊢B b1 ∥ b2 ▹ (⅋ Γ₁' Γ₂')
+        → (& Γ₁ Γ₂) ⊢B b1 ∥ b2 ▹ (& Γ₁' Γ₂')
 
   t-seq : {Γ Γ₁ Γ₂ : Context} {b₁ b₂ : Behaviour}
         → Γ ⊢B b₁ ▹ Γ₁
@@ -269,13 +269,13 @@ struct-congruence : {Γ Γ₁ : Context} {b₁ b₂ : Behaviour}
 struct-congruence t refl = t
 
 struct-cong-par-nil : {Γ₁ Γ₂ Γ₁' Γ₂' : Context} {b : Behaviour}
-                    → ⅋ Γ₁ Γ₂ ⊢B (b ∥ nil) ▹ ⅋ Γ₁' Γ₂'
+                    → & Γ₁ Γ₂ ⊢B (b ∥ nil) ▹ & Γ₁' Γ₂'
                     → Γ₁ ⊢B b ▹ Γ₁'
 struct-cong-par-nil (t-par x _) = x
 
 struct-cong-par-sym : {Γ₁ Γ₂ Γ₁' Γ₂' : Context} {b₁ b₂ : Behaviour}
-                    → ⅋ Γ₁ Γ₂ ⊢B (b₁ ∥ b₂) ▹ ⅋ Γ₁' Γ₂'
-                    → ⅋ Γ₂ Γ₁ ⊢B (b₂ ∥ b₁) ▹ ⅋ Γ₂' Γ₁'
+                    → & Γ₁ Γ₂ ⊢B (b₁ ∥ b₂) ▹ & Γ₁' Γ₂'
+                    → & Γ₂ Γ₁ ⊢B (b₂ ∥ b₁) ▹ & Γ₂' Γ₁'
 struct-cong-par-sym (t-par t₁ t₂) = t-par t₂ t₁
 \end{code}
 
