@@ -45,18 +45,14 @@
 \tocauthor{Authors' Instructions}
 \maketitle
 
-
 \begin{abstract}
 
 \keywords{formal verification, type checker, Agda, Jolie}
 \end{abstract}
 
-
 \section{Introduction}
 
 Jolie is a service-oriented programming language ~\cite{mon10}. Its programs are constructed in three layers: the behavioural layer deals with the internal actions of a process and the communication it performs seen from the process’s point if view, the service layer deals with the underlying architectural instructions and the network layer deals with connecting communicating services.
-
-This paper is literate Agda and uses standard library ~\cite{agdastdlib}.
 
 \section{Behavioural layer}
 
@@ -73,7 +69,7 @@ open import Data.Nat using (ℕ)
 open import Data.List.All using (All)
 open import Relation.Nullary using (¬_)
 open import Relation.Binary.PropositionalEquality using (_≡_; refl)
-open import Data.Vec using (Vec; _∈_; []; _++_; _∷_; here; there)
+open import Data.Vec using (Vec; []; _++_; _∷_; here; there)
 open import Data.Product using (_,_; _×_)
 \end{code}
 \fi
@@ -101,6 +97,8 @@ Variable : Set
 Variable = ℕ
 \end{code}
 
+Jolie have different types of values, which form the expressions. We use types from the standard library ~\cite{agdastdlib} to represent them.
+
 \begin{code}
 data Value : Set where
   string : String → Value
@@ -111,18 +109,26 @@ data Value : Set where
   void : Value
 \end{code}
 
+The expressions have usual form: $ 2 + 2 $, $ 2 != x $ and so on.
+
 \begin{code}
-data BinOp : Set where
-  -- Arithmetics
-  plus minus mult div power : BinOp
+data BinaryOp : Set where
+  -- Arithmetical
+  plus minus mult div power : BinaryOp
   -- Logical operations
-  and or : BinOp
+  equal and or : BinaryOp
+
+data UnaryOp : Set where
+  not : UnaryOp
 
 data Expr : Set where
   var : Variable → Expr
-  binary : BinOp → Expr → Expr → Expr
+  binary : BinaryOp → Expr → Expr → Expr
+  unary : UnaryOp → Expr → Expr
   constant : Value → Expr
 \end{code}
+
+
 
 \begin{code}
 data Operation : Set where
@@ -191,9 +197,91 @@ Ctx : ℕ → Set
 Ctx = Vec TypeDecl
 
 data Context : Set where
-  ◆ : ∀ {n} → Ctx n → Context
-  ■ : ∀ {n m} → Ctx n → Ctx m → Context
+  ⋆ : ∀ {n} → Ctx n → Context
+  ⅋ : Context → Context → Context
+
+infix 4 _∈_
+
+data _∈_ : TypeDecl → Context → Set where
+  here-⋆ : ∀ {n} {x} {xs : Ctx n}
+         → x ∈ ⋆ (x Vec.∷ xs)
+
+  there-⋆ : ∀ {n} {x y} {xs : Ctx n}
+            (x∈xs : x ∈ ⋆ xs)
+          → x ∈ ⋆ (y Vec.∷ xs)
+
+  here-left-⅋ : ∀ {n m} {x} {xs : Ctx n} {ys : Ctx m}
+              → x ∈ ⅋  (⋆ (x Vec.∷ xs)) (⋆ ys)
+
+  here-right-⅋ : ∀ {n m} {x} {xs : Ctx n} {ys : Ctx m}
+               → x ∈ ⅋ (⋆ xs) (⋆ (x Vec.∷ ys))
+
+  there-left-⅋ : ∀ {n m} {x} {xs : Ctx n} {ys : Ctx m}
+                 (x∈xs : x ∈ ⅋ (⋆ xs) (⋆ ys))
+               → x ∈ ⅋ (⋆ (x Vec.∷ xs)) (⋆ ys)
+  
+  there-right-⅋ : ∀ {n m} {x} {xs : Ctx n} {ys : Ctx m}
+                  (x∈xs : x ∈ ⅋ (⋆ xs) (⋆ ys))
+                → x ∈ ⅋ (⋆ xs) (⋆ (x Vec.∷ ys))
 \end{code}
+
+\begin{code}
+data _⊢ₑ_∶_ (Γ : Context) : Expr → Type → Set where
+  expr-t : {s : Expr} {b : Type}
+         → Γ ⊢ₑ s ∶ b
+
+data _⊢B_▹_ : Context → Behaviour → Context → Set where
+  t-nil : {Γ : Context}
+        --------------
+        → Γ ⊢B nil ▹ Γ
+          
+  t-if : {Γ Γ₁ : Context} {b₁ b₂ : Behaviour} {e : Expr}
+       → Γ ⊢ₑ e ∶ bool -- Γ ⊢ e : bool
+       → Γ ⊢B b₁ ▹ Γ₁
+       → Γ ⊢B b₂ ▹ Γ₁
+       --------------------------------
+       → Γ ⊢B if e then b₁ else b₂ ▹ Γ₁
+          
+  t-while : {Γ : Context} {b : Behaviour} {e : Expr} 
+          → Γ ⊢ₑ e ∶ bool
+          → Γ ⊢B b ▹ Γ
+          -----------------------
+          → Γ ⊢B while[ e ] b ▹ Γ
+
+  t-par : {Γ₁ Γ₂ Γ₁' Γ₂' : Context} {b1 b2 : Behaviour}
+        → Γ₁ ⊢B b1 ▹ Γ₁'
+        → Γ₂ ⊢B b2 ▹ Γ₂'
+        ------------------------------------
+        → (⅋ Γ₁ Γ₂) ⊢B b1 ∥ b2 ▹ (⅋ Γ₁' Γ₂')
+
+  t-seq : {Γ Γ₁ Γ₂ : Context} {b₁ b₂ : Behaviour}
+        → Γ ⊢B b₁ ▹ Γ₁
+        → Γ₁ ⊢B b₂ ▹ Γ₂
+        -------------------
+        → Γ ⊢B b₁ ∶ b₂ ▹ Γ₂
+\end{code}
+
+\begin{code}
+struct-congruence : {Γ Γ₁ : Context} {b₁ b₂ : Behaviour}
+                  → Γ ⊢B b₁ ▹ Γ₁
+                  → b₁ ≡ b₂
+                  → Γ ⊢B b₂ ▹ Γ₁
+struct-congruence t refl = t
+
+struct-cong-par-nil : {Γ₁ Γ₂ Γ₁' Γ₂' : Context} {b : Behaviour}
+                    → ⅋ Γ₁ Γ₂ ⊢B (b ∥ nil) ▹ ⅋ Γ₁' Γ₂'
+                    → Γ₁ ⊢B b ▹ Γ₁'
+struct-cong-par-nil (t-par x _) = x
+
+struct-cong-par-sym : {Γ₁ Γ₂ Γ₁' Γ₂' : Context} {b₁ b₂ : Behaviour}
+                    → ⅋ Γ₁ Γ₂ ⊢B (b₁ ∥ b₂) ▹ ⅋ Γ₁' Γ₂'
+                    → ⅋ Γ₂ Γ₁ ⊢B (b₂ ∥ b₁) ▹ ⅋ Γ₂' Γ₁'
+struct-cong-par-sym (t-par t₁ t₂) = t-par t₂ t₁
+\end{code}
+
+\section{Conclusions}
+
+\section{Future work}
 
 \begin{thebibliography}{4}
 
