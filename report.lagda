@@ -4,6 +4,7 @@
 \setcounter{tocdepth}{3}
 \usepackage{graphicx}
 \usepackage{hyperref}
+\usepackage{authblk}
 \usepackage[references]{agda} 
 \usepackage{url}
 \newcommand{\keywords}[1]{\par\addvspace\baselineskip
@@ -25,7 +26,16 @@
 % their surnames. This ensures that the names appear correctly in
 % the running heads and the author index.
 %
-\author{Eugene Akentyev}
+\author[1]{Evgenii Akentev}
+\author[2]{Alexander Tchitchigin}
+\author[1,3]{Larisa Safina}
+\author[1]{Manuel Mazzara}
+
+\affil[1]{Innopolis University}
+\affil[$\relax$]{\email{\{e.akentev, l.safina, m.mazzara\}@innopolis.ru}}
+\affil[2]{Kazan Federal University}
+\affil[$\relax$]{\email{sad.ronin@gmail.com}}
+\affil[3]{University of Southern Denmark}
 %
 \authorrunning{Verified type checker for Jolie programming language}
 % (feature abused for this document to repeat the title also on left hand pages)
@@ -48,7 +58,7 @@
 \begin{abstract}
 Jolie is a service-oriented programming language which comes with the formal specification of its type system. However, there is no tool to ensure that programs in Jolie are well-typed. In this paper we provide the results of building a type checker for Jolie as a part of its syntax and semantics formal model. We express the type checker as a program with dependent types in Agda proof assistant which helps to ascertain that the type checker is verifiable itself.
 
-\keywords{formal verification, type checker, dependent types, Agda, Jolie}
+\keywords{formal verification, type checker, dependent types, Agda, Jolie, type systems, microservices}
 \end{abstract}
 
 \if{False}
@@ -84,7 +94,7 @@ Jolie was created for microservices, which communicate with each other with mess
   amount.fruit.description = "Apple"\\
 \end{center}
 
-To simplify the construction, I want to propose the enumeration of variables. Let $ J - $ a Jolie program, let $ V = vars(J) - $ variables in $ J $, then $ V_i = i$ where $i \in \mathbb{N} $. Then the example above will look like:
+To simplify the construction, we want to propose the enumeration of variables. Let $ J - $ a Jolie program, let $ V = vars(J) - $ variables in $ J $, then $ V_i = i$ where $i \in \mathbb{N} $. Then the example above will look like:
 
 \begin{center}
   0 = 12\\
@@ -299,8 +309,6 @@ Dependent types
 \bibitem{mon10} Fabrizio Montesi. Jolie: a service-oriented programming language. Master’s thesis, University of Bologna, Department of Computer Science, 2010.
 
 \bibitem{agdastdlib} \url{https://github.com/agda/agda-stdlib}
-
-\bibitem{cakeml} Kumar, Ramana and Myreen, Magnus O. and Norrish, Michael and Owens, Scott. CakeML: A Verified Implementation of ML. 2014
 
 \end{thebibliography}
 
