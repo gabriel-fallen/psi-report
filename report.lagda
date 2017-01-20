@@ -46,21 +46,16 @@
 \maketitle
 
 \begin{abstract}
+Jolie is a service-oriented programming language which comes with the formal specification of its type system. However, there is no tool to ensure that programs in Jolie are well-typed. In this paper we provide the results of building a type checker for Jolie as a part of its syntax and semantics formal model. We express the type checker as a program with dependent types in Agda proof assistant which helps to ascertain that the type checker is verifiable itself.
 
-\keywords{formal verification, type checker, Agda, Jolie}
+\keywords{formal verification, type checker, dependent types, Agda, Jolie}
 \end{abstract}
-
-\section{Introduction}
-
-Jolie is a service-oriented programming language ~\cite{mon10}. Its programs are constructed in three layers: the behavioural layer deals with the internal actions of a process and the communication it performs seen from the process’s point if view, the service layer deals with the underlying architectural instructions and the network layer deals with connecting communicating services.
-
-\section{Behavioural layer}
 
 \if{False}
 \begin{code}
 -- Imports
 open import Data.String using (String)
-open import Data.Integer using (ℤ)
+open import Data.Integer using (ℤ; +_)
 open import Data.Product using (_×_)
 open import Data.Maybe using (Maybe)
 open import Data.List using (List)
@@ -71,8 +66,15 @@ open import Relation.Nullary using (¬_)
 open import Relation.Binary.PropositionalEquality using (_≡_; refl)
 open import Data.Vec using (Vec; []; _++_; _∷_; here; there)
 open import Data.Product using (_,_; _×_)
+open import Function using (_$_)
 \end{code}
 \fi
+
+\section{Introduction}
+
+Jolie is a service-oriented programming language ~\cite{mon10}. Its programs are constructed in three layers: the behavioural layer deals with the internal actions of a process and the communication it performs seen from the process’s point if view, the service layer deals with the underlying architectural instructions and the network layer deals with connecting communicating services.
+
+\section{Syntax of behavioural layer}
 
 Jolie was created for microservices, which communicate with each other with messages. A variable in Jolie is a path in a message which is structured as a tree. For example:
 
@@ -90,74 +92,44 @@ To simplify the construction, I want to propose the enumeration of variables. Le
   2 = "Apple"\\
 \end{center}
 
-Let's define the type of variables, since they are natural numbers:
+After this simplification the type of variables can be defined. The type of natural numbers is located in standard library of Agda \cite{agdastdlib}.
 
 \begin{code}
 Variable : Set
 Variable = ℕ
 \end{code}
 
-Jolie have different types of values, which form the expressions. We use types from the standard library ~\cite{agdastdlib} to represent them.
+The syntax of behavioural layer can be found in \cite{nielsen13} (page 2).
+In this paper there is no need in expressions, so their type is empty.
 
 \begin{code}
-data Value : Set where
-  string : String → Value
-  int : ℤ → Value
-  bool : Bool → Value
-  double : ℤ × ℤ → Value
-  long : ℤ → Value
-  void : Value
-\end{code}
-
-The expressions have usual form: $ 2 + 2 $, $ 2 != x $ and so on.
-
-\begin{code}
-data BinaryOp : Set where
-  -- Arithmetical
-  plus minus mult div power : BinaryOp
-  -- Logical operations
-  equal and or : BinaryOp
-
-data UnaryOp : Set where
-  not : UnaryOp
-
 data Expr : Set where
-  var : Variable → Expr
-  binary : BinaryOp → Expr → Expr → Expr
-  unary : UnaryOp → Expr → Expr
-  constant : Value → Expr
 \end{code}
 
-
+Operation names, channel names and locations are represented by strings.
 
 \begin{code}
-data Operation : Set where
-data Location : Set where
-data Channel : Set where
+Operation : Set
+Operation = String
+
+Location : Set
+Location = String
+
+Channel : Set
+Channel = String
 \end{code}
 
+\if{False}
 \begin{code}
--- Output
-data η̂ : Set where
-  -- o@l(e) -- Notification
-  _at_[_] : Operation → Location → Expr → η̂
+data η̂ : Set
+data η : Set
+\end{code}
+\fi
 
-  -- o@l(e)(x) -- Solicit-response
-  _at_[_][_] : Operation → Location → Expr → Variable → η̂
+The behavioural layer simultaneously has usual statements ('if then else', 'while', 'assign') and special statements ('inputchoice', 'parallel', 'input', 'output', etc).
 
-data Behaviour : Set
-
--- Input
-data η : Set where
-  -- o(x) -- One-way
-  _[_] : Operation → Variable → η
-
-  -- o(x)(x'){B} -- Request-response
-  _[_][_]_ : Operation → Variable → Variable → Behaviour → η
-
-data Behaviour where
-  input : η → Behaviour
-  output : η̂  → Behaviour
+\begin{code}
+data Behaviour : Set where
   if_then_else_ : Expr → Behaviour → Behaviour → Behaviour
   while[_]_ : Expr → Behaviour → Behaviour
   
@@ -177,7 +149,28 @@ data Behaviour where
 
   wait : Channel → Operation → Location → Variable → Behaviour
   exec : Channel → Operation → Variable → Behaviour → Behaviour
+
+  input : η → Behaviour
+  output : η̂  → Behaviour
+
+-- Input
+data η where
+  -- o(x) -- One-way
+  _[_] : Operation → Variable → η
+
+  -- o(x)(x'){B} -- Request-response
+  _[_][_]_ : Operation → Variable → Variable → Behaviour → η
+
+-- Output
+data η̂ where
+  -- o@l(e) -- Notification
+  _at_[_] : Operation → Location → Expr → η̂
+
+  -- o@l(e)(x) -- Solicit-response
+  _at_[_][_] : Operation → Location → Expr → Variable → η̂
 \end{code}
+
+\section{Type system}
 
 \begin{code}
 data Type : Set where
@@ -189,9 +182,6 @@ data TypeDecl : Set where
   inOneWay : Operation → Type → TypeDecl
   inReqRes : Operation → Type → Type → TypeDecl
   var : Variable → Type → TypeDecl
-
-data _⊆_ : Type → Type → Set where
-  sub : {T₁ T₂ : Type} → T₁ ⊆ T₂
 
 Ctx : ℕ → Set
 Ctx = Vec TypeDecl
@@ -210,56 +200,57 @@ data _∈_ : TypeDecl → Context → Set where
             (x∈xs : x ∈ ⋆ xs)
           → x ∈ ⋆ (y Vec.∷ xs)
 
-  here-left-⅋ : ∀ {n m} {x} {xs : Ctx n} {ys : Ctx m}
+  here-left-& : ∀ {n m} {x} {xs : Ctx n} {ys : Ctx m}
               → x ∈ &  (⋆ (x Vec.∷ xs)) (⋆ ys)
 
-  here-right-⅋ : ∀ {n m} {x} {xs : Ctx n} {ys : Ctx m}
+  here-right-& : ∀ {n m} {x} {xs : Ctx n} {ys : Ctx m}
                → x ∈ & (⋆ xs) (⋆ (x Vec.∷ ys))
 
-  there-left-⅋ : ∀ {n m} {x} {xs : Ctx n} {ys : Ctx m}
+  there-left-& : ∀ {n m} {x} {xs : Ctx n} {ys : Ctx m}
                  (x∈xs : x ∈ & (⋆ xs) (⋆ ys))
                → x ∈ & (⋆ (x Vec.∷ xs)) (⋆ ys)
   
-  there-right-⅋ : ∀ {n m} {x} {xs : Ctx n} {ys : Ctx m}
+  there-right-& : ∀ {n m} {x} {xs : Ctx n} {ys : Ctx m}
                   (x∈xs : x ∈ & (⋆ xs) (⋆ ys))
                 → x ∈ & (⋆ xs) (⋆ (x Vec.∷ ys))
 \end{code}
 
+Typing rules.
+
 \begin{code}
 data _⊢ₑ_∶_ (Γ : Context) : Expr → Type → Set where
-  expr-t : {s : Expr} {b : Type}
-         → Γ ⊢ₑ s ∶ b
+  expr : {s : Expr} {b : Type}
+       → Γ ⊢ₑ s ∶ b
 
 data _⊢B_▹_ : Context → Behaviour → Context → Set where
   t-nil : {Γ : Context}
-        --------------
         → Γ ⊢B nil ▹ Γ
           
   t-if : {Γ Γ₁ : Context} {b₁ b₂ : Behaviour} {e : Expr}
        → Γ ⊢ₑ e ∶ bool -- Γ ⊢ e : bool
        → Γ ⊢B b₁ ▹ Γ₁
        → Γ ⊢B b₂ ▹ Γ₁
-       --------------------------------
        → Γ ⊢B if e then b₁ else b₂ ▹ Γ₁
           
   t-while : {Γ : Context} {b : Behaviour} {e : Expr} 
           → Γ ⊢ₑ e ∶ bool
           → Γ ⊢B b ▹ Γ
-          -----------------------
           → Γ ⊢B while[ e ] b ▹ Γ
 
   t-par : {Γ₁ Γ₂ Γ₁' Γ₂' : Context} {b1 b2 : Behaviour}
         → Γ₁ ⊢B b1 ▹ Γ₁'
         → Γ₂ ⊢B b2 ▹ Γ₂'
-        ------------------------------------
         → (& Γ₁ Γ₂) ⊢B b1 ∥ b2 ▹ (& Γ₁' Γ₂')
 
   t-seq : {Γ Γ₁ Γ₂ : Context} {b₁ b₂ : Behaviour}
         → Γ ⊢B b₁ ▹ Γ₁
         → Γ₁ ⊢B b₂ ▹ Γ₂
-        -------------------
         → Γ ⊢B b₁ ∶ b₂ ▹ Γ₂
 \end{code}
+
+\subsection{Structural theorems}
+
+Proofs of simple theorems.
 
 \begin{code}
 struct-congruence : {Γ Γ₁ : Context} {b₁ b₂ : Behaviour}
@@ -267,29 +258,49 @@ struct-congruence : {Γ Γ₁ : Context} {b₁ b₂ : Behaviour}
                   → b₁ ≡ b₂
                   → Γ ⊢B b₂ ▹ Γ₁
 struct-congruence t refl = t
+\end{code}
+
+\begin{code}
+struct-cong-seq-nil : {Γ Γ₁ : Context} {b : Behaviour}
+                    → Γ ⊢B nil ∶ b ▹ Γ₁
+                    → Γ ⊢B b ▹ Γ₁
+struct-cong-seq-nil (t-seq t-nil x) = x
 
 struct-cong-par-nil : {Γ₁ Γ₂ Γ₁' Γ₂' : Context} {b : Behaviour}
                     → & Γ₁ Γ₂ ⊢B (b ∥ nil) ▹ & Γ₁' Γ₂'
                     → Γ₁ ⊢B b ▹ Γ₁'
 struct-cong-par-nil (t-par x _) = x
+\end{code}
 
+\begin{code}
 struct-cong-par-sym : {Γ₁ Γ₂ Γ₁' Γ₂' : Context} {b₁ b₂ : Behaviour}
                     → & Γ₁ Γ₂ ⊢B (b₁ ∥ b₂) ▹ & Γ₁' Γ₂'
                     → & Γ₂ Γ₁ ⊢B (b₂ ∥ b₁) ▹ & Γ₂' Γ₁'
 struct-cong-par-sym (t-par t₁ t₂) = t-par t₂ t₁
 \end{code}
 
+\begin{code}
+struct-cong-par-assoc : {Γ₁ Γ₂ Γ₃ Γ₁' Γ₂' Γ₃' : Context} {b₁ b₂ b₃ : Behaviour}
+                    → & (& Γ₁ Γ₂) Γ₃ ⊢B (b₁ ∥ b₂) ∥ b₃ ▹ & (& Γ₁' Γ₂') Γ₃'
+                    → & Γ₁ (& Γ₂ Γ₃) ⊢B b₁ ∥ (b₂ ∥ b₃) ▹ & Γ₁' (& Γ₂' Γ₃')
+struct-cong-par-assoc (t-par (t-par t1 t2) t3) = t-par t1 (t-par t2 t3)
+\end{code}
+
 \section{Conclusions}
 
-\section{Future work}
+\section{Related and future work}
+
+Dependent types 
 
 \begin{thebibliography}{4}
 
-\bibitem{typesystemjolie} J. M. Nielsen. A Type System for the Jolie Language. 2013.
+\bibitem{nielsen13} J. M. Nielsen. A Type System for the Jolie Language. 2013.
 
 \bibitem{mon10} Fabrizio Montesi. Jolie: a service-oriented programming language. Master’s thesis, University of Bologna, Department of Computer Science, 2010.
 
 \bibitem{agdastdlib} \url{https://github.com/agda/agda-stdlib}
+
+\bibitem{cakeml} Kumar, Ramana and Myreen, Magnus O. and Norrish, Michael and Owens, Scott. CakeML: A Verified Implementation of ML. 2014
 
 \end{thebibliography}
 
