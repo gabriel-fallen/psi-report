@@ -1,6 +1,10 @@
 \documentclass[runningheads,a4paper]{llncs}
 
+\usepackage{ucs}
 \usepackage{amssymb}
+\usepackage{bbm}
+\usepackage[english]{babel}
+\usepackage{unicode-math}
 \setcounter{tocdepth}{3}
 \usepackage{graphicx}
 \usepackage{hyperref}
@@ -9,6 +13,11 @@
 \usepackage{url}
 \newcommand{\keywords}[1]{\par\addvspace\baselineskip
 \noindent\keywordname\enspace\ignorespaces#1}
+
+% set font
+\setmainfont{XITS}
+\setmathfont{XITS Math}
+\setsansfont[Scale=MatchLowercase]{DejaVuSansMono.ttf}
 
 \begin{document}
 
