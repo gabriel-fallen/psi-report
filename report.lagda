@@ -221,25 +221,25 @@ infix 4 _∈_
 
 data _∈_ : TypeDecl → Context → Set where
   here-⋆ : ∀ {n} {x} {xs : Ctx n}
-         → x ∈ ⋆ (x Vec.∷ xs)
+         → x ∈ ⋆ (x ∷ xs)
 
   there-⋆ : ∀ {n} {x y} {xs : Ctx n}
             (x∈xs : x ∈ ⋆ xs)
-          → x ∈ ⋆ (y Vec.∷ xs)
+          → x ∈ ⋆ (y ∷ xs)
 
   here-left-& : ∀ {n m} {x} {xs : Ctx n} {ys : Ctx m}
-              → x ∈ &  (⋆ (x Vec.∷ xs)) (⋆ ys)
+              → x ∈ &  (⋆ (x ∷ xs)) (⋆ ys)
 
   here-right-& : ∀ {n m} {x} {xs : Ctx n} {ys : Ctx m}
-               → x ∈ & (⋆ xs) (⋆ (x Vec.∷ ys))
+               → x ∈ & (⋆ xs) (⋆ (x ∷ ys))
 
   there-left-& : ∀ {n m} {x} {xs : Ctx n} {ys : Ctx m}
                  (x∈xs : x ∈ & (⋆ xs) (⋆ ys))
-               → x ∈ & (⋆ (x Vec.∷ xs)) (⋆ ys)
+               → x ∈ & (⋆ (x ∷ xs)) (⋆ ys)
 
   there-right-& : ∀ {n m} {x} {xs : Ctx n} {ys : Ctx m}
                 (x∈xs : x ∈ & (⋆ xs) (⋆ ys))
-                → x ∈ & (⋆ xs) (⋆ (x Vec.∷ ys))
+                → x ∈ & (⋆ xs) (⋆ (x ∷ ys))
 \end{code}
 
 Typing rules.
@@ -277,7 +277,7 @@ data _⊢B_▹_ : Context → Behaviour → Context → Set where
 
 \subsection{Structural theorems}
 
-To demonstrate the correctness of the typing rules given before, we will prove the lemma called "Structural Congruence for Behaviours"~\cite{nielsen13} (page 42).
+To demonstrate the correctness of the typing rules given above, we will prove the lemma called "Structural Congruence for Behaviours"~\cite{nielsen13} (page 42).
 
 \begin{center}
 \textit{Let} $ \Gamma \vdash B_1 \rhd \Gamma' $ \\
@@ -285,48 +285,58 @@ To demonstrate the correctness of the typing rules given before, we will prove t
 \textit{then} $ \Gamma \vdash B_2 \rhd \Gamma' $
 \end{center}
 
-Let's start with the trivial case, when two behaviours are equal by definition.
-In this case the proof itself is done by Agda's pattern matching.
+The proof is the case analysis of all possible $ B_1 $ and $ B_2 $.
+
+\begin{itemize}
+
+\item \textit{Case} $ B_1 \equiv B_2 $
+
+In this case the proof is done by Agda's pattern matching.
 
 \begin{code}
-struct-congruence : {Γ Γ₁ : Context} {b₁ b₂ : Behaviour}
+struct-cong-b₁≡b₂ : {Γ Γ₁ : Context} {b₁ b₂ : Behaviour}
                   → Γ ⊢B b₁ ▹ Γ₁
                   → b₁ ≡ b₂
                   → Γ ⊢B b₂ ▹ Γ₁
-struct-congruence t refl = t
+struct-cong-b₁≡b₂ t refl = t
 \end{code}
 
-$$ 0; B \equiv B $$
-$$ B \equiv 0 ; B $$
+\item \textit{Case} $ 0; B \equiv B $
 
 \begin{code}
-struct-cong-seq-nil1 : {Γ Γ₁ : Context} {b : Behaviour}
-                     → Γ ⊢B nil ∶ b ▹ Γ₁
-                     → Γ ⊢B b ▹ Γ₁
-struct-cong-seq-nil1 (t-seq t-nil x) = x
-
-struct-cong-seq-nil2 : {Γ Γ₁ : Context} {b : Behaviour}
-                     → Γ ⊢B b ▹ Γ₁
-                     → Γ ⊢B nil ∶ b ▹ Γ₁
-struct-cong-seq-nil2 x = t-seq t-nil x
+struct-cong-nil∶b→b : {Γ Γ₁ : Context} {b : Behaviour}
+                    → Γ ⊢B nil ∶ b ▹ Γ₁
+                    → Γ ⊢B b ▹ Γ₁
+struct-cong-nil∶b→b (t-seq t-nil x) = x
 \end{code}
 
-$$ B \parallel 0 \equiv B $$
-$$ B \equiv B \parallel 0 $$
+\item \textit{Case} $ B \equiv 0 ; B $
 
 \begin{code}
-struct-cong-par-nil1 : {Γ₁ Γ₂ Γ₁' Γ₂' : Context} {b : Behaviour}
-                     → & Γ₁ Γ₂ ⊢B (b ∥ nil) ▹ & Γ₁' Γ₂'
-                     → Γ₁ ⊢B b ▹ Γ₁'
-struct-cong-par-nil1 (t-par x _) = x
-
-struct-cong-par-nil2 : {Γ₁ Γ₂ Γ₃ : Context} {b : Behaviour}
-                     → Γ₁ ⊢B b ▹ Γ₂
-                     → & Γ₁ Γ₃ ⊢B (b ∥ nil) ▹ & Γ₂ Γ₃
-struct-cong-par-nil2 x = t-par x t-nil
+struct-cong-b→nil∶b : {Γ Γ₁ : Context} {b : Behaviour}
+                    → Γ ⊢B b ▹ Γ₁
+                    → Γ ⊢B nil ∶ b ▹ Γ₁
+struct-cong-b→nil∶b x = t-seq t-nil x
 \end{code}
 
-$$ B_1 \parallel B_2 \equiv B_2 \parallel B_1 $$
+\item \textit{Case} $ B \parallel 0 \equiv B $
+\begin{code}
+struct-cong-b∥nil→b : {Γ₁ Γ₂ Γ₁' Γ₂' : Context} {b : Behaviour}
+                    → & Γ₁ Γ₂ ⊢B (b ∥ nil) ▹ & Γ₁' Γ₂'
+                    → Γ₁ ⊢B b ▹ Γ₁'
+struct-cong-b∥nil→b (t-par x _) = x
+\end{code}
+
+\item \textit{Case} $ B \equiv B \parallel 0 $
+
+\begin{code}
+struct-cong-b→b∥nil : {Γ₁ Γ₂ Γ₃ : Context} {b : Behaviour}
+                    → Γ₁ ⊢B b ▹ Γ₂
+                    → & Γ₁ Γ₃ ⊢B (b ∥ nil) ▹ & Γ₂ Γ₃
+struct-cong-b→b∥nil x = t-par x t-nil
+\end{code}
+
+\item \textit{Case} $ B_1 \parallel B_2 \equiv B_2 \parallel B_1 $
 
 \begin{code}
 struct-cong-par-sym : {Γ₁ Γ₂ Γ₁' Γ₂' : Context} {b₁ b₂ : Behaviour}
@@ -335,7 +345,7 @@ struct-cong-par-sym : {Γ₁ Γ₂ Γ₁' Γ₂' : Context} {b₁ b₂ : Behavio
 struct-cong-par-sym (t-par t₁ t₂) = t-par t₂ t₁
 \end{code}
 
-$$ (B_1 \parallel B_2) \parallel B_3 \equiv B_1 \parallel (B_2 \parallel B_3) $$
+\item \textit{Case} $ (B_1 \parallel B_2) \parallel B_3 \equiv B_1 \parallel (B_2 \parallel B_3) $
 
 \begin{code}
 struct-cong-par-assoc : {Γ₁ Γ₂ Γ₃ Γ₁' Γ₂' Γ₃' : Context} {b₁ b₂ b₃ : Behaviour}
@@ -345,6 +355,8 @@ struct-cong-par-assoc (t-par (t-par t1 t2) t3) = t-par t1 (t-par t2 t3)
 \end{code}
 
 The proof for $ B_1 \parallel (B_2 \parallel B_3) \equiv (B_1 \parallel B_2) \parallel B_3 $ is similar.
+
+\end{itemize}
 
 \section{Conclusions}
 
