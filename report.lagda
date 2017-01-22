@@ -147,8 +147,8 @@ Channel = String
 
 \if{False}
 \begin{code}
-data η̂ : Set
 data η : Set
+data η^ : Set
 \end{code}
 \fi
 
@@ -178,7 +178,7 @@ data Behaviour : Set where
   exec : Channel → Operation → Variable → Behaviour → Behaviour
 
   input : η → Behaviour
-  output : η̂  → Behaviour
+  output : η^  → Behaviour
 
 -- Input
 data η where
@@ -189,12 +189,12 @@ data η where
   _[_][_]_ : Operation → Variable → Variable → Behaviour → η
 
 -- Output
-data η̂ where
+data η^ where
   -- o@l(e) -- Notification
-  _at_[_] : Operation → Location → Expr → η̂
+  _at_[_] : Operation → Location → Expr → η^
 
   -- o@l(e)(x) -- Solicit-response
-  _at_[_][_] : Operation → Location → Expr → Variable → η̂
+  _at_[_][_] : Operation → Location → Expr → Variable → η^
 \end{code}
 
 \section{Type system}
@@ -238,7 +238,7 @@ data _∈_ : TypeDecl → Context → Set where
                → x ∈ & (⋆ (x Vec.∷ xs)) (⋆ ys)
 
   there-right-& : ∀ {n m} {x} {xs : Ctx n} {ys : Ctx m}
-                  (x∈xs : x ∈ & (⋆ xs) (⋆ ys))
+                (x∈xs : x ∈ & (⋆ xs) (⋆ ys))
                 → x ∈ & (⋆ xs) (⋆ (x Vec.∷ ys))
 \end{code}
 
@@ -334,8 +334,6 @@ struct-cong-par-sym : {Γ₁ Γ₂ Γ₁' Γ₂' : Context} {b₁ b₂ : Behavio
                     → & Γ₂ Γ₁ ⊢B (b₂ ∥ b₁) ▹ & Γ₂' Γ₁'
 struct-cong-par-sym (t-par t₁ t₂) = t-par t₂ t₁
 \end{code}
-
-The proof for $ B_2 \parallel B_1 \equiv B_1 \parallel B_2 $ is similar.
 
 $$ (B_1 \parallel B_2) \parallel B_3 \equiv B_1 \parallel (B_2 \parallel B_3) $$
 
