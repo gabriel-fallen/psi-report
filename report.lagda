@@ -119,13 +119,9 @@ data Expr : Set where
 Operation names, channel names and locations are represented by strings.
 
 \begin{code}
-Operation : Set
+Operation Location Channel : Set
 Operation = String
-
-Location : Set
 Location = String
-
-Channel : Set
 Channel = String
 \end{code}
 
@@ -237,7 +233,7 @@ data _⊢B_▹_ : Context → Behaviour → Context → Set where
         → Γ ⊢B nil ▹ Γ
           
   t-if : {Γ Γ₁ : Context} {b₁ b₂ : Behaviour} {e : Expr}
-       → Γ ⊢ₑ e ∶ bool -- Γ ⊢ e : bool
+       → Γ ⊢ₑ e ∶ bool
        → Γ ⊢B b₁ ▹ Γ₁
        → Γ ⊢B b₂ ▹ Γ₁
        → Γ ⊢B if e then b₁ else b₂ ▹ Γ₁
@@ -260,7 +256,16 @@ data _⊢B_▹_ : Context → Behaviour → Context → Set where
 
 \subsection{Structural theorems}
 
-Proofs of simple theorems.
+To demonstrate the correctness of the typing rules given before, we will prove the lemma called "Structural Congruence for Behaviours" \cite{nielsen13} (42th page).
+
+\begin{center}
+\textit{Let} $ \Gamma \vdash B_1 \rhd \Gamma' $ \\
+\textit{If} $ B_1 \equiv B_2 $ \\
+\textit{then} $ \Gamma \vdash B_2 \rhd \Gamma' $
+\end{center}
+
+Let's start with the trivial case, when two behaviours are equal by definition.
+In this case the proof itself is done by Agda's pattern matching.
 
 \begin{code}
 struct-congruence : {Γ Γ₁ : Context} {b₁ b₂ : Behaviour}
@@ -270,17 +275,37 @@ struct-congruence : {Γ Γ₁ : Context} {b₁ b₂ : Behaviour}
 struct-congruence t refl = t
 \end{code}
 
-\begin{code}
-struct-cong-seq-nil : {Γ Γ₁ : Context} {b : Behaviour}
-                    → Γ ⊢B nil ∶ b ▹ Γ₁
-                    → Γ ⊢B b ▹ Γ₁
-struct-cong-seq-nil (t-seq t-nil x) = x
+$$ 0; B \equiv B $$
+$$ B \equiv 0 ; B $$
 
-struct-cong-par-nil : {Γ₁ Γ₂ Γ₁' Γ₂' : Context} {b : Behaviour}
-                    → & Γ₁ Γ₂ ⊢B (b ∥ nil) ▹ & Γ₁' Γ₂'
-                    → Γ₁ ⊢B b ▹ Γ₁'
-struct-cong-par-nil (t-par x _) = x
+\begin{code}
+struct-cong-seq-nil1 : {Γ Γ₁ : Context} {b : Behaviour}
+                     → Γ ⊢B nil ∶ b ▹ Γ₁
+                     → Γ ⊢B b ▹ Γ₁
+struct-cong-seq-nil1 (t-seq t-nil x) = x
+
+struct-cong-seq-nil2 : {Γ Γ₁ : Context} {b : Behaviour}
+                     → Γ ⊢B b ▹ Γ₁
+                     → Γ ⊢B nil ∶ b ▹ Γ₁
+struct-cong-seq-nil2 x = t-seq t-nil x
 \end{code}
+
+$$ B \parallel 0 \equiv B $$
+$$ B \equiv B \parallel 0 $$
+
+\begin{code}
+struct-cong-par-nil1 : {Γ₁ Γ₂ Γ₁' Γ₂' : Context} {b : Behaviour}
+                     → & Γ₁ Γ₂ ⊢B (b ∥ nil) ▹ & Γ₁' Γ₂'
+                     → Γ₁ ⊢B b ▹ Γ₁'
+struct-cong-par-nil1 (t-par x _) = x
+
+struct-cong-par-nil2 : {Γ₁ Γ₂ Γ₃ : Context} {b : Behaviour}
+                     → Γ₁ ⊢B b ▹ Γ₂
+                     → & Γ₁ Γ₃ ⊢B (b ∥ nil) ▹ & Γ₂ Γ₃
+struct-cong-par-nil2 x = t-par x t-nil
+\end{code}
+
+$$ B_1 \parallel B_2 \equiv B_2 \parallel B_1 $$
 
 \begin{code}
 struct-cong-par-sym : {Γ₁ Γ₂ Γ₁' Γ₂' : Context} {b₁ b₂ : Behaviour}
@@ -289,12 +314,18 @@ struct-cong-par-sym : {Γ₁ Γ₂ Γ₁' Γ₂' : Context} {b₁ b₂ : Behavio
 struct-cong-par-sym (t-par t₁ t₂) = t-par t₂ t₁
 \end{code}
 
+The proof for $ B_2 \parallel B_1 \equiv B_1 \parallel B_2 $ is similar.
+
+$$ (B_1 \parallel B_2) \parallel B_3 \equiv B_1 \parallel (B_2 \parallel B_3) $$
+
 \begin{code}
 struct-cong-par-assoc : {Γ₁ Γ₂ Γ₃ Γ₁' Γ₂' Γ₃' : Context} {b₁ b₂ b₃ : Behaviour}
                     → & (& Γ₁ Γ₂) Γ₃ ⊢B (b₁ ∥ b₂) ∥ b₃ ▹ & (& Γ₁' Γ₂') Γ₃'
                     → & Γ₁ (& Γ₂ Γ₃) ⊢B b₁ ∥ (b₂ ∥ b₃) ▹ & Γ₁' (& Γ₂' Γ₃')
 struct-cong-par-assoc (t-par (t-par t1 t2) t3) = t-par t1 (t-par t2 t3)
 \end{code}
+
+The proof for $ B_1 \parallel (B_2 \parallel B_3) \equiv (B_1 \parallel B_2) \parallel B_3 $ is similar.
 
 \section{Conclusions}
 
