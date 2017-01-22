@@ -5,7 +5,7 @@
 \usepackage{graphicx}
 \usepackage{hyperref}
 \usepackage{authblk}
-\usepackage[references]{agda} 
+\usepackage[references]{agda}
 \usepackage{url}
 \newcommand{\keywords}[1]{\par\addvspace\baselineskip
 \noindent\keywordname\enspace\ignorespaces#1}
@@ -51,12 +51,15 @@
 % "llncs.dem" accompanies the document class "llncs.cls".
 %
 
-\toctitle{Lecture Notes in Computer Science}
+\toctitle{Verified type checker for Jolie programming language}
 \tocauthor{Authors' Instructions}
 \maketitle
 
 \begin{abstract}
-Jolie is a service-oriented programming language which comes with the formal specification of its type system. However, there is no tool to ensure that programs in Jolie are well-typed. In this paper we provide the results of building a type checker for Jolie as a part of its syntax and semantics formal model. We express the type checker as a program with dependent types in Agda proof assistant which helps to ascertain that the type checker is verifiable itself.
+Jolie is a service-oriented programming language which comes with the formal specification of its type system defined on paper.
+However, there is no tool to ensure that programs in Jolie are well-typed. In this paper we provide the results
+of building a type checker for Jolie as a part of its syntax and semantics formal model. We express
+the type checker as a program with dependent types in Agda proof assistant which helps to ascertain that the type checker is correct.
 
 \keywords{formal verification, type checker, dependent types, Agda, Jolie, type systems, microservices}
 \end{abstract}
@@ -82,11 +85,15 @@ open import Function using (_$_)
 
 \section{Introduction}
 
-Jolie is a service-oriented programming language ~\cite{mon10}. Its programs are constructed in three layers: the behavioural layer deals with the internal actions of a process and the communication it performs seen from the process’s point if view, the service layer deals with the underlying architectural instructions and the network layer deals with connecting communicating services.
+Jolie is a service-oriented programming language ~\cite{mon10}. Jolie programs are constructed
+in three layers. Behavioural layer deals with internal actions of a process and communication
+it performs as seen from the process’ point of view. Service layer deals with underlying
+architectural instructions and network layer deals with connecting communicating services.
 
 \section{Syntax of behavioural layer}
 
-Jolie was created for microservices, which communicate with each other with messages. A variable in Jolie is a path in a message which is structured as a tree. For example:
+Jolie was created for microservices which communicate with each other via messages.
+A variable in Jolie represents a path in a message which is structured as a tree. For example:
 
 \begin{center}
   amount = 12\\
@@ -94,7 +101,9 @@ Jolie was created for microservices, which communicate with each other with mess
   amount.fruit.description = "Apple"\\
 \end{center}
 
-To simplify the construction, we want to propose the enumeration of variables. Let $ J - $ a Jolie program, let $ V = vars(J) - $ variables in $ J $, then $ V_i = i$ where $i \in \mathbb{N} $. Then the example above will look like:
+To simplify the construction, we propose an enumeration of variables. Let $ J $ be a Jolie program,
+$ V = vars(J) $ -- variables in $ J $, then $ V_i = i$ where $i \in \mathbb{N} $.
+Then the example above will look like:
 
 \begin{center}
   0 = 12\\
@@ -102,15 +111,17 @@ To simplify the construction, we want to propose the enumeration of variables. L
   2 = "Apple"\\
 \end{center}
 
-After this simplification the type of variables can be defined. The type of natural numbers is located in standard library of Agda \cite{agdastdlib}.
+After this simplification the type of variables can be defined. The type of natural numbers
+is located in standard library of Agda~\cite{agdastdlib}.
 
 \begin{code}
 Variable : Set
 Variable = ℕ
 \end{code}
 
-The syntax of behavioural layer can be found in \cite{nielsen13} (page 2).
-In this paper there is no need in expressions, so their type is empty.
+Complete syntax of behavioural layer can be found in~\cite{nielsen13} (page 2).
+We do not need to consider expressions' structure to prove desired theorems
+therefore type $Expr$ is left empty.
 
 \begin{code}
 data Expr : Set where
@@ -132,13 +143,14 @@ data η : Set
 \end{code}
 \fi
 
-The behavioural layer simultaneously has usual statements ('if then else', 'while', 'assign') and special statements ('inputchoice', 'parallel', 'input', 'output', etc).
+The behavioural layer has both ordinary control--flow statements ('if-then-else', 'while', 'assign')
+and special statements to control parallelism and communication ('inputchoice', 'parallel', 'input', 'output', etc).
 
 \begin{code}
 data Behaviour : Set where
   if_then_else_ : Expr → Behaviour → Behaviour → Behaviour
   while[_]_ : Expr → Behaviour → Behaviour
-  
+
   -- Sequence
   _∶_ : Behaviour → Behaviour → Behaviour
 
@@ -215,7 +227,7 @@ data _∈_ : TypeDecl → Context → Set where
   there-left-& : ∀ {n m} {x} {xs : Ctx n} {ys : Ctx m}
                  (x∈xs : x ∈ & (⋆ xs) (⋆ ys))
                → x ∈ & (⋆ (x Vec.∷ xs)) (⋆ ys)
-  
+
   there-right-& : ∀ {n m} {x} {xs : Ctx n} {ys : Ctx m}
                   (x∈xs : x ∈ & (⋆ xs) (⋆ ys))
                 → x ∈ & (⋆ xs) (⋆ (x Vec.∷ ys))
@@ -231,14 +243,14 @@ data _⊢ₑ_∶_ (Γ : Context) : Expr → Type → Set where
 data _⊢B_▹_ : Context → Behaviour → Context → Set where
   t-nil : {Γ : Context}
         → Γ ⊢B nil ▹ Γ
-          
+
   t-if : {Γ Γ₁ : Context} {b₁ b₂ : Behaviour} {e : Expr}
        → Γ ⊢ₑ e ∶ bool
        → Γ ⊢B b₁ ▹ Γ₁
        → Γ ⊢B b₂ ▹ Γ₁
        → Γ ⊢B if e then b₁ else b₂ ▹ Γ₁
-          
-  t-while : {Γ : Context} {b : Behaviour} {e : Expr} 
+
+  t-while : {Γ : Context} {b : Behaviour} {e : Expr}
           → Γ ⊢ₑ e ∶ bool
           → Γ ⊢B b ▹ Γ
           → Γ ⊢B while[ e ] b ▹ Γ
@@ -256,7 +268,7 @@ data _⊢B_▹_ : Context → Behaviour → Context → Set where
 
 \subsection{Structural theorems}
 
-To demonstrate the correctness of the typing rules given before, we will prove the lemma called "Structural Congruence for Behaviours" \cite{nielsen13} (42th page).
+To demonstrate the correctness of the typing rules given before, we will prove the lemma called "Structural Congruence for Behaviours"~\cite{nielsen13} (page 42).
 
 \begin{center}
 \textit{Let} $ \Gamma \vdash B_1 \rhd \Gamma' $ \\
@@ -331,7 +343,7 @@ The proof for $ B_1 \parallel (B_2 \parallel B_3) \equiv (B_1 \parallel B_2) \pa
 
 \section{Related and future work}
 
-Dependent types 
+Dependent types
 
 \begin{thebibliography}{4}
 
