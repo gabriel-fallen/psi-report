@@ -41,7 +41,7 @@
 \author[1]{Manuel Mazzara}
 
 \affil[1]{Innopolis University}
-\affil[$\relax$]{\email{\{e.akentev, l.safina, m.mazzara\}@innopolis.ru}}
+\affil[$\relax$]{\email{ak3ntev@gmail.com}, \email{\{l.safina, m.mazzara\}@innopolis.ru}}
 \affil[2]{Kazan Federal University}
 \affil[$\relax$]{\email{sad.ronin@gmail.com}}
 \affil[3]{University of Southern Denmark}
@@ -99,7 +99,7 @@ in three layers. Behavioural layer deals with internal actions of a process and 
 it performs as seen from the process’ point of view. Service layer deals with underlying
 architectural instructions and network layer deals with connecting communicating services.
 
-\section{Syntax of behavioural layer}
+\section{Syntax of the behavioural layer}
 
 Jolie was created for microservices which communicate with each other via messages.
 A variable in Jolie represents a path in a message which is structured as a tree. For example:
@@ -171,7 +171,7 @@ data Behaviour : Set where
 
   nil : Behaviour
 
-  -- [η₁]{B₁}⋯[ηₐ]{Bₐ} -- Input choice
+  -- Input choice -- [η₁]{B₁}⋯[ηₐ]{Bₐ}
   inputchoice : List (η × Behaviour) → Behaviour
 
   wait : Channel → Operation → Location → Variable → Behaviour
@@ -275,9 +275,11 @@ data _⊢B_▹_ : Context → Behaviour → Context → Set where
         → Γ ⊢B b₁ ∶ b₂ ▹ Γ₂
 \end{code}
 
-\subsection{Structural theorems}
+\subsection{Structural Congruence for Behaviours}
 
-To demonstrate the correctness of the typing rules given above, we will prove the lemma called "Structural Congruence for Behaviours"~\cite{nielsen13} (page 42).
+According to the Curry-Howard correspondence, types of the programs are propostions and terms are proofs. For example, the type $ A \rightarrow B $ correspond to the implication from $ A $ to $ B $ and such function $ f $ that takes an element of type $ A $ and returns an element of type $ B $ will be a proof of this theorem.
+
+To demonstrate the correctness of the typing rules given above, we will prove the lemma called "Structural Congruence for Behaviours"~\cite{nielsen13} (page 42):
 
 \begin{center}
 \textit{Let} $ \Gamma \vdash B_1 \rhd \Gamma' $ \\
@@ -362,7 +364,7 @@ The proof for $ B_1 \parallel (B_2 \parallel B_3) \equiv (B_1 \parallel B_2) \pa
 
 \section{Related and future work}
 
-Dependent types
+\cite{cakeml}
 
 \begin{thebibliography}{4}
 
@@ -371,6 +373,8 @@ Dependent types
 \bibitem{mon10} Fabrizio Montesi. Jolie: a service-oriented programming language. Master’s thesis, University of Bologna, Department of Computer Science, 2010.
 
 \bibitem{agdastdlib} \url{https://github.com/agda/agda-stdlib}
+
+\bibitem{cakeml} Kumar, Ramana and Myreen, Magnus O. and Norrish, Michael and Owens, Scott. CakeML: A Verified Implementation of ML. 2014
 
 \end{thebibliography}
 
