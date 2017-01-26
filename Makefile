@@ -6,6 +6,7 @@ LATEX=latexmk -pdf -use-make -e '$$pdflatex=q/lualatex %O %S/'
 
 all:
 	$(AGDA) $(AFLAGS) $(SOURCE).lagda
+	cp report.bib latex/report.bib
 	cd latex/ && \
 	$(LATEX) $(SOURCE).tex && \
 	mv $(SOURCE).pdf ..

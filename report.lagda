@@ -94,10 +94,14 @@ open import Function using (_$_)
 
 \section{Introduction}
 
-Jolie is a service-oriented programming language ~\cite{mon10}. Jolie programs are constructed
+Microservices are a new trend in software architecture ~\cite{DBLP:journals/corr/DragoniGLMMMS16}
+
+Jolie is a service-oriented programming language ~\cite{montesi2010jolie}. Jolie programs are constructed
 in three layers. Behavioural layer deals with internal actions of a process and communication
 it performs as seen from the process’ point of view. Service layer deals with underlying
 architectural instructions and network layer deals with connecting communicating services.
+
+
 
 \section{Syntax of the behavioural layer}
 
@@ -128,7 +132,7 @@ Variable : Set
 Variable = ℕ
 \end{code}
 
-Complete syntax of behavioural layer can be found in~\cite{nielsen13} (page 2).
+Complete syntax of behavioural layer can be found in~\cite{nielsen2013type} (page 2).
 We do not need to consider expressions' structure to prove desired theorems
 therefore type $Expr$ is left empty.
 
@@ -279,7 +283,7 @@ data _⊢B_▹_ : Context → Behaviour → Context → Set where
 
 According to the Curry-Howard correspondence, types of the programs are propostions and terms are proofs. For example, the type $ A \rightarrow B $ correspond to the implication from $ A $ to $ B $ and such function $ f $ that takes an element of type $ A $ and returns an element of type $ B $ will be a proof of this theorem.
 
-To demonstrate the correctness of the typing rules given above, we will prove the lemma called "Structural Congruence for Behaviours"~\cite{nielsen13} (page 42):
+To demonstrate the correctness of the typing rules given above, we will prove the lemma called "Structural Congruence for Behaviours"~\cite{nielsen2013type} (page 42):
 
 \begin{center}
 \textit{Let} $ \Gamma \vdash B_1 \rhd \Gamma' $ \\
@@ -364,18 +368,7 @@ The proof for $ B_1 \parallel (B_2 \parallel B_3) \equiv (B_1 \parallel B_2) \pa
 
 \section{Related and future work}
 
-\cite{cakeml}
-
-\begin{thebibliography}{4}
-
-\bibitem{nielsen13} J. M. Nielsen. A Type System for the Jolie Language. 2013.
-
-\bibitem{mon10} Fabrizio Montesi. Jolie: a service-oriented programming language. Master’s thesis, University of Bologna, Department of Computer Science, 2010.
-
-\bibitem{agdastdlib} \url{https://github.com/agda/agda-stdlib}
-
-\bibitem{cakeml} Kumar, Ramana and Myreen, Magnus O. and Norrish, Michael and Owens, Scott. CakeML: A Verified Implementation of ML. 2014
-
-\end{thebibliography}
+\bibliographystyle{unsrt}
+\bibliography{report}
 
 \end{document}
