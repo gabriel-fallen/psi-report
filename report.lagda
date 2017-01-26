@@ -94,14 +94,14 @@ open import Function using (_$_)
 
 \section{Introduction}
 
-Microservices are a new trend in software architecture ~\cite{DBLP:journals/corr/DragoniGLMMMS16}
+Microservices are a new trend in software architecture ~\cite{DBLP:journals/corr/DragoniGLMMMS16}.
 
 Jolie is a service-oriented programming language ~\cite{montesi2010jolie}. Jolie programs are constructed
 in three layers. Behavioural layer deals with internal actions of a process and communication
 it performs as seen from the process’ point of view. Service layer deals with underlying
 architectural instructions and network layer deals with connecting communicating services.
 
-
+This article presents a formalisation of the subset of the Jolie programming language in Agda \footnote{The whole formalisation is available at \url{http://github.com/ak3n/jolie}}. We implement the syntax of the behavioural layer of Jolie, provide the necessary subset of typing rules and the proof of "Structural Congruence" lemma for behaviours.
 
 \section{Syntax of the behavioural layer}
 
@@ -134,7 +134,7 @@ Variable = ℕ
 
 Complete syntax of behavioural layer can be found in~\cite{nielsen2013type} (page 2).
 We do not need to consider expressions' structure to prove desired theorems
-therefore type $Expr$ is left empty.
+therefore type \AgdaDatatype{Expr} is left empty.
 
 \begin{code}
 data Expr : Set where
@@ -203,10 +203,17 @@ data η^ where
 
 \section{Type system}
 
+Jolie has usual data types such as strings, integers, doubles, longs and booleans.
+Also, there are \AgdaDatatype{raw} for data streams and \AgdaDatatype{void} for no data.
+
 \begin{code}
 data Type : Set where
   bool int double long string raw void : Type
+\end{code}
 
+
+
+\begin{code}
 data TypeDecl : Set where
   outNotify : Operation → Location → Type → TypeDecl
   outSolRes : Operation → Location → Type → Type → TypeDecl
@@ -279,7 +286,7 @@ data _⊢B_▹_ : Context → Behaviour → Context → Set where
         → Γ ⊢B b₁ ∶ b₂ ▹ Γ₂
 \end{code}
 
-\subsection{Structural Congruence for Behaviours}
+\section{Structural Congruence for Behaviours}
 
 According to the Curry-Howard correspondence, types of the programs are propostions and terms are proofs. For example, the type $ A \rightarrow B $ correspond to the implication from $ A $ to $ B $ and such function $ f $ that takes an element of type $ A $ and returns an element of type $ B $ will be a proof of this theorem.
 
@@ -296,8 +303,6 @@ The proof is the case analysis of all possible $ B_1 $ and $ B_2 $.
 \begin{itemize}
 
 \item \textit{Case} $ B_1 \equiv B_2 $
-
-In this case the proof is done by Agda's pattern matching.
 
 \begin{code}
 struct-cong-b₁≡b₂ : {Γ Γ₁ : Context} {b₁ b₂ : Behaviour}
