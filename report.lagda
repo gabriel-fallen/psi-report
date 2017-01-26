@@ -165,7 +165,7 @@ data Behaviour : Set where
   while[_]_ : Expr → Behaviour → Behaviour
 
   -- Sequence
-  _∶_ : Behaviour → Behaviour → Behaviour
+  _⇒_ : Behaviour → Behaviour → Behaviour
 
   -- Parallel
   _∥_ : Behaviour → Behaviour → Behaviour
@@ -175,7 +175,7 @@ data Behaviour : Set where
 
   nil : Behaviour
 
-  -- Input choice -- [η₁]{B₁}⋯[ηₐ]{Bₐ}
+  -- [η₁]{B₁}⋯[ηₐ]{Bₐ}
   inputchoice : List (η × Behaviour) → Behaviour
 
   wait : Channel → Operation → Location → Variable → Behaviour
@@ -203,7 +203,7 @@ data η^ where
 
 \section{Type system}
 
-Jolie has usual data types such as strings, integers, doubles, longs and booleans.
+There are usual data types such as strings, integers, doubles, longs and booleans.
 Also, there are \AgdaDatatype{raw} for data streams and \AgdaDatatype{void} for no data.
 
 \begin{code}
@@ -211,25 +211,45 @@ data Type : Set where
   bool int double long string raw void : Type
 \end{code}
 
-
+Typically, a context of a program is a list of variables, but to service all three layers there is a special type called \AgdaDatatype{TypeDecl}. It has five constructors: the first two (unidirectional and bidirectional) are for output communication. The left part of such bindings consists of an operation name and a location of a hosting service. The next two are for input communication and the last one is for variables.
 
 \begin{code}
 data TypeDecl : Set where
-  outNotify : Operation → Location → Type → TypeDecl
-  outSolRes : Operation → Location → Type → Type → TypeDecl
-  inOneWay : Operation → Type → TypeDecl
-  inReqRes : Operation → Type → Type → TypeDecl
-  var : Variable → Type → TypeDecl
+  -- o@l : <T> 
+  _at_∶<_> : Operation → Location → Type → TypeDecl
 
+  -- o@l : <T, T>
+  _at_∶<_,_> : Operation → Location → Type → Type → TypeDecl
+
+  -- o : <T>
+  _∶<_> : Operation → Type → TypeDecl
+
+  -- o : <T, T>
+  _∶<_,_> : Operation → Type → Type → TypeDecl
+
+  -- x : T
+  _∶_ : Variable → Type → TypeDecl
+\end{code}
+
+Therefore, the type of context is a vector of \AgdaDatatype{TypeDecl}.
+
+\begin{code}
 Ctx : ℕ → Set
 Ctx = Vec TypeDecl
+\end{code}
 
+Although the type of context is defined, it's not enough, because programs in Jolie can be parallel. We define one more type called \AgdaDatatype{Context} to cover such situations. It has only two constructors: the first one just takes \AgdaDatatype{Ctx\ n} and the second one consists of two elements of itself.
+
+\begin{code}
 data Context : Set where
   ⋆ : ∀ {n} → Ctx n → Context
   & : Context → Context → Context
+\end{code}
 
+The type of context is not a vector anymore, so we need to define such type that will express the fact of presence of \AgdaDatatype{TypeDecl} in \AgdaDatatype{Context}.
+
+\begin{code}
 infix 4 _∈_
-
 data _∈_ : TypeDecl → Context → Set where
   here-⋆ : ∀ {n} {x} {xs : Ctx n}
          → x ∈ ⋆ (x ∷ xs)
@@ -253,13 +273,15 @@ data _∈_ : TypeDecl → Context → Set where
                 → x ∈ & (⋆ xs) (⋆ (x ∷ ys))
 \end{code}
 
-Typing rules.
+Since we don't care about expressions at all, we introduce the empty type of a correctly typed expression with variables from context $ \Gamma $.
 
 \begin{code}
 data _⊢ₑ_∶_ (Γ : Context) : Expr → Type → Set where
-  expr : {s : Expr} {b : Type}
-       → Γ ⊢ₑ s ∶ b
+\end{code}
 
+
+
+\begin{code}
 data _⊢B_▹_ : Context → Behaviour → Context → Set where
   t-nil : {Γ : Context}
         → Γ ⊢B nil ▹ Γ
@@ -283,7 +305,7 @@ data _⊢B_▹_ : Context → Behaviour → Context → Set where
   t-seq : {Γ Γ₁ Γ₂ : Context} {b₁ b₂ : Behaviour}
         → Γ ⊢B b₁ ▹ Γ₁
         → Γ₁ ⊢B b₂ ▹ Γ₂
-        → Γ ⊢B b₁ ∶ b₂ ▹ Γ₂
+        → Γ ⊢B b₁ ⇒ b₂ ▹ Γ₂
 \end{code}
 
 \section{Structural Congruence for Behaviours}
@@ -316,7 +338,7 @@ struct-cong-b₁≡b₂ t refl = t
 
 \begin{code}
 struct-cong-nil∶b→b : {Γ Γ₁ : Context} {b : Behaviour}
-                    → Γ ⊢B nil ∶ b ▹ Γ₁
+                    → Γ ⊢B nil ⇒ b ▹ Γ₁
                     → Γ ⊢B b ▹ Γ₁
 struct-cong-nil∶b→b (t-seq t-nil x) = x
 \end{code}
@@ -326,7 +348,7 @@ struct-cong-nil∶b→b (t-seq t-nil x) = x
 \begin{code}
 struct-cong-b→nil∶b : {Γ Γ₁ : Context} {b : Behaviour}
                     → Γ ⊢B b ▹ Γ₁
-                    → Γ ⊢B nil ∶ b ▹ Γ₁
+                    → Γ ⊢B nil ⇒ b ▹ Γ₁
 struct-cong-b→nil∶b x = t-seq t-nil x
 \end{code}
 
@@ -369,9 +391,9 @@ The proof for $ B_1 \parallel (B_2 \parallel B_3) \equiv (B_1 \parallel B_2) \pa
 
 \end{itemize}
 
-\section{Conclusions}
+\section{Conclusions and future work}
 
-\section{Related and future work}
+In this paper, we presented the formalisation of the subset of Jolie --- a service-oriented programming language.
 
 \bibliographystyle{unsrt}
 \bibliography{report}
