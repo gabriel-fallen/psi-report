@@ -211,7 +211,7 @@ data Type : Set where
   bool int double long string raw void : Type
 \end{code}
 
-Typically, a context of a program is a list of variables, but to service all three layers there is a special type called \AgdaDatatype{TypeDecl}. It has five constructors: the first two (unidirectional and bidirectional) are for output communication. The left part of such bindings consists of an operation name and a location of a hosting service. The next two are for input communication and the last one is for variables.
+Usually, context of a program is a list of variables, but to service all three layers there is a special type called \AgdaDatatype{TypeDecl}. It has five constructors: the first two (unidirectional and bidirectional) are for output communication. The left part of such bindings consists of an operation name and a location of a hosting service. The next two are for input communication and the last one is for variables.
 
 \begin{code}
 data TypeDecl : Set where
@@ -279,7 +279,7 @@ Since we don't care about expressions at all, we introduce the empty type of a c
 data _⊢ₑ_∶_ (Γ : Context) : Expr → Type → Set where
 \end{code}
 
-
+Finally, we can present the subset of the typing rules of the behavioural layer. The first constructor is for \AgdaDatatype{nil} behaviour. Since \AgdaDatatype{nil} does nothing, the contexts before and after are equal. The next two are rules for ordinary behaviours \AgdaDatatype{if\_then\_else} and \AgdaDatatype{while}. Finally, the last two are for sequent and parallel statements.
 
 \begin{code}
 data _⊢B_▹_ : Context → Behaviour → Context → Set where
@@ -372,10 +372,10 @@ struct-cong-b→b∥nil x = t-par x t-nil
 \item \textit{Case} $ B_1 \parallel B_2 \equiv B_2 \parallel B_1 $
 
 \begin{code}
-struct-cong-par-sym : {Γ₁ Γ₂ Γ₁' Γ₂' : Context} {b₁ b₂ : Behaviour}
+struct-cong-par-comm : {Γ₁ Γ₂ Γ₁' Γ₂' : Context} {b₁ b₂ : Behaviour}
                     → & Γ₁ Γ₂ ⊢B (b₁ ∥ b₂) ▹ & Γ₁' Γ₂'
                     → & Γ₂ Γ₁ ⊢B (b₂ ∥ b₁) ▹ & Γ₂' Γ₁'
-struct-cong-par-sym (t-par t₁ t₂) = t-par t₂ t₁
+struct-cong-par-comm (t-par t₁ t₂) = t-par t₂ t₁
 \end{code}
 
 \item \textit{Case} $ (B_1 \parallel B_2) \parallel B_3 \equiv B_1 \parallel (B_2 \parallel B_3) $
