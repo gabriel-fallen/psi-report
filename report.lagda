@@ -42,7 +42,7 @@
 
 \affil[1]{Innopolis University}
 \affil[$\relax$]{\email{ak3ntev@gmail.com}, \email{\{l.safina, m.mazzara\}@innopolis.ru}}
-\affil[2]{Kazan Federal University}
+\affil[2]{Innosoft LLC}
 \affil[$\relax$]{\email{sad.ronin@gmail.com}}
 \affil[3]{University of Southern Denmark}
 %
@@ -215,7 +215,7 @@ Usually, context of a program is a list of variables, but to service all three l
 
 \begin{code}
 data TypeDecl : Set where
-  -- o@l : <T> 
+  -- o@l : <T>
   _at_∶<_> : Operation → Location → Type → TypeDecl
 
   -- o@l : <T, T>
