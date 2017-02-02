@@ -134,7 +134,7 @@ Variable = ℕ
 
 Complete syntax of behavioural layer can be found in~\cite{nielsen2013type} (page 2).
 We do not need to consider expressions' structure to prove desired theorems
-therefore type \AgdaDatatype{Expr} is left empty.
+therefore type \AgdaDatatype{Expr} is left empty:
 
 \begin{code}
 data Expr : Set where
@@ -297,15 +297,15 @@ data _⊢B_▹_ : Context → Behaviour → Context → Set where
           → Γ ⊢B b ▹ Γ
           → Γ ⊢B while[ e ] b ▹ Γ
 
-  t-par : {Γ₁ Γ₂ Γ₁' Γ₂' : Context} {b1 b2 : Behaviour}
-        → Γ₁ ⊢B b1 ▹ Γ₁'
-        → Γ₂ ⊢B b2 ▹ Γ₂'
-        → (& Γ₁ Γ₂) ⊢B b1 ∥ b2 ▹ (& Γ₁' Γ₂')
-
   t-seq : {Γ Γ₁ Γ₂ : Context} {b₁ b₂ : Behaviour}
         → Γ ⊢B b₁ ▹ Γ₁
         → Γ₁ ⊢B b₂ ▹ Γ₂
         → Γ ⊢B b₁ ⇒ b₂ ▹ Γ₂
+
+  t-par : {Γ₁ Γ₂ Γ₁' Γ₂' : Context} {b1 b2 : Behaviour}
+        → Γ₁ ⊢B b1 ▹ Γ₁'
+        → Γ₂ ⊢B b2 ▹ Γ₂'
+        → (& Γ₁ Γ₂) ⊢B b1 ∥ b2 ▹ (& Γ₁' Γ₂')
 \end{code}
 
 \section{Structural Congruence for Behaviours}
