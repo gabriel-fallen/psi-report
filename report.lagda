@@ -93,20 +93,32 @@ open import Function using (_$_)
 \fi
 
 \section{Introduction}
+Microservices architecture is an modern trend in software architecture and emerging development paradigm where autonomous entities are composed to build up software~\cite{DBLP:journals/corr/DragoniGLMMMS16}.
+In the fast growing landscape of microservices, Jolie~\cite{montesi2010jolie} appears to be a good candidate to play the role of paradigmatic programming language.
 
-Microservices are a new trend in software architecture ~\cite{DBLP:journals/corr/DragoniGLMMMS16}.
+\textbf{TODO: need to add genderal idea of programming paradigm
+}
 
-Jolie is a service-oriented programming language ~\cite{montesi2010jolie}. Jolie programs are constructed
-in three layers. Behavioural layer deals with internal actions of a process and communication
-it performs as seen from the process’ point of view. Service layer deals with underlying
-architectural instructions and network layer deals with connecting communicating services.
+\textbf{TODO: part on static type checking missing}
 
 This article presents a formalisation of the subset of the Jolie programming language in Agda \footnote{The whole formalisation is available at \url{http://github.com/ak3n/jolie}}. We implement the syntax of the behavioural layer of Jolie, provide the necessary subset of typing rules and the proof of "Structural Congruence" lemma for behaviours.
 
-\section{Syntax of the behavioural layer}
+\textbf{TODO: structure of the paper/outline here}
 
-Jolie was created for microservices which communicate with each other via messages.
-A variable in Jolie represents a path in a message which is structured as a tree. For example:
+\section{Jolie Formalization}
+Jolie programs are constructued in three layers:
+
+\begin{itemize}
+\item \textit{Behavioural layer}: it deals with internal actions of a process and communication
+performs as seen from the process’ point of view.
+\item \textit{Service layer}: it deals with underlying
+architectural instructions.
+\item \textit{Network layer}: it deals with connecting communicating services.
+\end{itemize}
+
+\subsection{Syntax of the behavioural layer}
+
+Jolie was created for microservices which communicate with each other via messages. A variable in Jolie represents a path in a message which is structured as a tree. For example:
 
 \begin{center}
   amount = 12\\
@@ -134,7 +146,7 @@ Variable = ℕ
 
 Complete syntax of behavioural layer can be found in~\cite{nielsen2013type} (page 2).
 We do not need to consider expressions' structure to prove desired theorems
-therefore type \AgdaDatatype{Expr} is left empty.
+therefore type \AgdaDatatype{Expr} is left empty:
 
 \begin{code}
 data Expr : Set where
@@ -297,15 +309,15 @@ data _⊢B_▹_ : Context → Behaviour → Context → Set where
           → Γ ⊢B b ▹ Γ
           → Γ ⊢B while[ e ] b ▹ Γ
 
-  t-par : {Γ₁ Γ₂ Γ₁' Γ₂' : Context} {b1 b2 : Behaviour}
-        → Γ₁ ⊢B b1 ▹ Γ₁'
-        → Γ₂ ⊢B b2 ▹ Γ₂'
-        → (& Γ₁ Γ₂) ⊢B b1 ∥ b2 ▹ (& Γ₁' Γ₂')
-
   t-seq : {Γ Γ₁ Γ₂ : Context} {b₁ b₂ : Behaviour}
         → Γ ⊢B b₁ ▹ Γ₁
         → Γ₁ ⊢B b₂ ▹ Γ₂
         → Γ ⊢B b₁ ⇒ b₂ ▹ Γ₂
+
+  t-par : {Γ₁ Γ₂ Γ₁' Γ₂' : Context} {b1 b2 : Behaviour}
+        → Γ₁ ⊢B b1 ▹ Γ₁'
+        → Γ₂ ⊢B b2 ▹ Γ₂'
+        → (& Γ₁ Γ₂) ⊢B b1 ∥ b2 ▹ (& Γ₁' Γ₂')
 \end{code}
 
 \section{Structural Congruence for Behaviours}
